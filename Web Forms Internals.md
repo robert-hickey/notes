@@ -45,7 +45,36 @@ ViewState is a property of System.Web.UI.Control that has a key/value pair index
 
 # The Page Lifecycle and ViewState
 
+### Step 0: Generating the Compiled Class
+This step is actually completed during the Pre-Page execution request architecture, as described in the Integrated Pipeline section. The class contains programmatic definition of controls defined in the aspx page. Once generated it is stored in the ASP.NET Temporary Files folder (along with the application dll), and updated on page modification or application restart. This occurs on the first request to the page.
 
+The dynamically generated class inherits from IHttpHandler, which makes it eligible for acting as a handler for the request. All Html and Web controls are defined in this class, along with their static properties (ID, Text). __This is why __VIEWSTATE does not need to store design-time data!__ Finally, the BuildControlTree() method is called to create the control hierarchy. 
+
+### Step 1: Page Initialization
+Page Initialization is divided into three events:
+
+1. PreInit
+    * Entry point of page lifecycle. Available only for Page class.
+    * Only place where programmatic access to master pages and themes is allowed.
+    * Note that this event is not recursive, as it cannot be called on child controls.
+2. Init
+    * Fired recursively for all page and child controls. It is fired starting from the bottom of the hierarchy and moving up (Page fires last). 
+3. InitComplete
+    * End of initialization phase, also for the Page only.
+    * It is at the start of this event that __Page.TrackViewState()__ is called. Starting here, any change in ViewState keys are marked as 'Dirty', __and thus are stored in __VIEWSTATE during the SaveViewState method later in the lifecycle.__
+
+### Step 2: Loading Page Data
+This section is divided into three stages:
+
+1. LoadControlState
+    * What is Control State? 
+        * Before .NET 2.0, behavioral state for controls was part of ViewState, so you had to keep it on at all times. This had severe performance implications.  Starting in 2.0, behavioral state is stored separately and cannot be turned off, which allowed ViewState to be disabled for certain controls without affecting their behavior. Note that the Control State data is stored in the __VIEWSTATE field. 
+
+### Step 3: Loading the Page
+
+### Step 4: Rendering the Page
+
+### A Full Lifecycle
 
 
 
