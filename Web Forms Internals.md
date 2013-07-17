@@ -69,6 +69,20 @@ This section is divided into three stages:
 1. LoadControlState
     * What is Control State? 
         * Before .NET 2.0, behavioral state for controls was part of ViewState, so you had to keep it on at all times. This had severe performance implications.  Starting in 2.0, behavioral state is stored separately and cannot be turned off, which allowed ViewState to be disabled for certain controls without affecting their behavior. Note that the Control State data is stored in the __VIEWSTATE field. 
+    * The LoadControlState is only invoked on postbacks, meaning it is not triggered when the page is first loaded. 
+    * Not an event that you can subscribe to, it's a virtual protected method which you can override.
+    * The Control State that is saved in the __VIEWSTATE field (via SaveControlState, discussed later), is loaded and then populated in the control hierarchy.
+2. LoadViewState
+    * Only invoked on postbacks. 
+    * Not an event you can subscribe to, virtual protected method to override
+    * Page ViewState saved in the __VIEWSTATE field (via SaveViewState, discussed later) is loaded and then populated in control hierarchy.
+    * At this stage, page and controls have restored their previous state.
+3. LoadPostData
+    * Only invoked on postbacks.
+    * Called by the page for each control that implements IPostBackDataHandler and returns true if control has changed post data. If true, the control will load the new value. 
+        * ex. Textbox text changed / LoadPostData loads new value and returns true.
+
+
 
 ### Step 3: Loading the Page
 
