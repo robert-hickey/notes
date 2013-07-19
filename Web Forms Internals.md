@@ -81,12 +81,49 @@ This section is divided into three stages:
     * Only invoked on postbacks.
     * Called by the page for each control that implements IPostBackDataHandler and returns true if control has changed post data. If true, the control will load the new value. 
         * ex. Textbox text changed / LoadPostData loads new value and returns true.
-
-
+    * It is when this method is called that posted form data is loaded into control hierarchy.
+        * This is how textbox and drop down selections are preserved across postbacks.
+        * Common misconception is that ViewState is responsible for this, when in fact it is this method.
 
 ### Step 3: Loading the Page
 
+1. PreLoad
+    * Signals end of system level initialization. Raised for the page only. 
+2. Load
+    * Recursive event. Called in top-down manner.
+    * Important thing to note is that by this time, the page has restored its previous state (pre-postback) courtesy of LoadViewState and LoadPostData methods.
+3. RaisePostDataChangedEvent
+    * Fired only at postbacks. Also method of IPostBackDataHandler
+    * Called for every control that its call of LoadPostData returned true.
+    * Each control provides its own implementation. For example, TextBox raises its TextChanged event, and DropDownList raises its SelectedIndexChanged event.
+4. RaisePostBackEvent
+    * Fired only at postbacks. 
+    * Page determines the control that caused the postback. Page calls its RaisePostBackEvent method. Control then raises the appopriate postback event.
+        * ex.Button clicked, page calls Button's RaisePostBackEvent method,  Button control raises the OnClick event
+5. LoadCompleteEvent
+    * Page only. Signals end of page loading, now rendering starts...
+
 ### Step 4: Rendering the Page
+
+1. PreRender
+    * allows for last updates before the page is rendered.
+    * Recursive top-down 
+2. PreRenderComplete
+    * Signals the end of PreRender.
+3. SaveControlState
+    * Saves the Control State (which is then loaded by LoadControlState in the next postback)
+    * Called during the first PageLoad and all postbacks. 
+    * Recursive top-down
+4. SaveViewState
+    * Saves the ViewState (which is then loaded by the LoadViewState in the next postback)
+    * Called during PageLoad and Postbacks
+    * At this stage, both ControlState and ViewState are serialized into __VIEWSTATE hidden field. 
+5. Render
+    * Recursive top-down
+    * Returns HTML to the client. 
+6. Unload
+    * Recursive bottom-up
+    * Gives us a chance to perform cleanup before page is disposed. 
 
 ### A Full Lifecycle
 
